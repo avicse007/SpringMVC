@@ -277,6 +277,37 @@ context. Used to perform any cleanup work necessary.
  Description : Indicates that a method or field should be injected with a named resource (by default, another bean).
 
 
+### JSR-380 ANNOTATIONS
+
+
+    #### 1. @NotNull 
+    – validates that the annotated property value is not null
+    #### 2.  @AssertTrue 
+    – validates that the annotated property value is true
+    #### 3. @Size 
+    – validates that the annotated property value has a size between the attributes min and max; can be applied to String, Collection,   
+     Map, and array properties
+    #### 4. @Min  
+    -Validates that the annotated property has a value no smaller than the value attribute
+    #### 5. @Max 
+    – validates that the annotated property has a value no larger than the value attribute
+    #### 6. @Email 
+    – validates that the annotated property is a valid email address
+    #### 7. @NotEmpty 
+    – validates that the property is not null or empty; can be applied to String, Collection, Map or Array values
+    #### 8. @NotBlank 
+    – can be applied only to text values and validated that the property is not null or whitespace
+    #### 9. @Positive and @PositiveOrZero 
+    – apply to numeric values and validate that they are strictly positive, or positive including 0
+    #### 10. @Negative and @NegativeOrZero 
+    – apply to numeric values and validate that they are strictly negative, or negative including 0
+    #### 11. @Past and @PastOrPresent 
+    – validate that a date value is in the past or the past including the present; can be applied to date types including those added in 
+      Java 8
+    #### 12. @Future and @FutureOrPresent 
+    – validates that a date value is in the future, or in the future including the present
+
+
  ### TESTING ANNOTATIONS
 
  #### 1. Annotation : @AfterTransaction
