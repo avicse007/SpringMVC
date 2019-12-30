@@ -306,6 +306,11 @@ context. Used to perform any cleanup work necessary.
       Java 8
    #### 12. @Future and @FutureOrPresent 
     – validates that a date value is in the future, or in the future including the present
+    
+   #### 13. @Valid
+    - have to add @Valid annotation to the Controller method that does the form binding with the user defined form bean and have to  
+      provide the binding result to check all the constraints applied on the form bean is validated and has no error. 
+     
 
 
  ### TESTING ANNOTATIONS
