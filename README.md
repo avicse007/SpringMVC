@@ -114,7 +114,246 @@ You can customize individual DispatcherServlet instances by adding Servlet initi
 | namespace                         | Namespace of the WebApplicationContext. Defaults to [
 |                                   |  servlet-name]-servlet.
 
- ## CORE SPRING ANNOTATIONS
+
+## Spring Type Conversions
+
+### 1. Introduction
+
+Spring provides out-of-the-box various converters for built-in types; this means converting to/from basic types like String, Integer, Boolean and a number of other types.
+Apart from this, Spring also provides a solid type conversion SPI for developing our custom converters.
+
+### 2. Built-in Converters
+
+We'll start with the converters available out-of-the-box in Spring; let's have a look at the String to Integer conversion:
+	
+@Autowired
+ConversionService conversionService;
+ 
+@Test
+public void whenConvertStringToIntegerUsingDefaultConverter_thenSuccess() {
+    assertThat(
+      conversionService.convert("25", Integer.class)).isEqualTo(25);
+}
+
+The only thing we need to do here is to autowire the ConversionService provided by Spring and call the convert() method. The first argument is the value that we want to convert and the second argument is the target type that we want to convert to.
+
+### 3. Creating a Custom Converter
+
+Let's have a look at an example of converting a String representation of an Employee to an Employee instance.
+
+Here's the Employee class:
+
+public class Employee {
+ 
+    private long id;
+    private double salary;
+ 
+    // standard constructors, getters, setters
+}
+
+The String will be a comma-separated pair representing id and salary. For example, “1,50000.00”.
+
+In order to create our custom Converter, we need to implement the Converter<S, T> interface and implement the convert() method:
+
+public class StringToEmployeeConverter
+  implements Converter<String, Employee> {
+ 
+    @Override
+    public Employee convert(String from) {
+        String[] data = from.split(",");
+        return new Employee(
+          Long.parseLong(data[0]), 
+          Double.parseDouble(data[1]));
+    }
+}
+
+We're not done yet. We also need to tell Spring about this new converter by adding the StringToEmployeeConverter to the FormatterRegistry. This can be done by implementing the WebMvcConfigurer and overriding addFormatters() method:
+	
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+ 
+    @Override
+    public void addFormatters(FormatterRegistry registry) {
+        registry.addConverter(new StringToEmployeeConverter());
+    }
+}
+
+And that's it. Our new Converter is now available to the ConversionService and we can use it in the same way as any other built-in Converter:
+	
+@Test
+public void whenConvertStringToEmployee_thenSuccess() {
+    Employee employee = conversionService
+      .convert("1,50000.00", Employee.class);
+    Employee actualEmployee = new Employee(1, 50000.00);
+     
+    assertThat(conversionService.convert("1,50000.00", 
+      Employee.class))
+      .isEqualToComparingFieldByField(actualEmployee);
+}
+
+### 3.1. Implicit Conversion
+
+Beyond these explicit conversion using the ConversionService, Spring is also capable of implicitly converting values right in Controller methods for all registered converters:
+	
+@RestController
+public class StringToEmployeeConverterController {
+ 
+    @GetMapping("/string-to-employee")
+    public ResponseEntity<Object> getStringToEmployee(
+      @RequestParam("employee") Employee employee) {
+        return ResponseEntity.ok(employee);
+    }
+}
+
+This is a more natural way of using the Converters. Let's add a test to see it in action:
+	
+@Test
+public void getStringToEmployeeTest() throws Exception {
+    mockMvc.perform(get("/string-to-employee?employee=1,2000"))
+      .andDo(print())
+      .andExpect(jsonPath("$.id", is(1)))
+      .andExpect(jsonPath("$.salary", is(2000.0)))
+}
+
+As you can see, the test will print all the details of the request as well as the response. Here is the Employee object in JSON format that is returned as part of the response:
+{"id":1,"salary":2000.0}
+
+### 4. Creating a ConverterFactory
+
+It's also possible to create a ConverterFactory that creates Converters on demand. This is particularly helpful in creating Converters for Enums.
+
+Let's have a look at a really simple Enum:
+
+public enum Modes {
+    ALPHA, BETA;
+}
+
+Next, let's create a StringToEnumConverterFactory that can generate Converters for converting a String to any Enum:
+
+@Component
+public class StringToEnumConverterFactory 
+  implements ConverterFactory<String, Enum> {
+ 
+    private static class StringToEnumConverter<T extends Enum> 
+      implements Converter<String, T> {
+ 
+        private Class<T> enumType;
+ 
+        public StringToEnumConverter(Class<T> enumType) {
+            this.enumType = enumType;
+        }
+ 
+        public T convert(String source) {
+            return (T) Enum.valueOf(this.enumType, source.trim());
+        }
+    }
+ 
+    @Override
+    public <T extends Enum> Converter<String, T> getConverter(
+      Class<T> targetType) {
+        return new StringToEnumConverter(targetType);
+    }
+}
+
+As we can see, the factory class internally uses an implementation of Converter interface.
+
+One thing to note here is that although we'll use our Modes Enum to demonstrate the usage, we haven't mentioned the Enum anywhere in the StringToEnumConverterFactory. Our factory class is generic enough to generate the Converters on demand for any Enum type.
+
+The next step is to register this factory class as we registered our Converter in the previous example:
+	
+@Override
+public void addFormatters(FormatterRegistry registry) {
+    registry.addConverter(new StringToEmployeeConverter());
+    registry.addConverterFactory(new StringToEnumConverterFactory());
+}
+
+Now the ConversionService is ready to convert Strings to Enums:
+	
+@Test
+public void whenConvertStringToEnum_thenSuccess() {
+    assertThat(conversionService.convert("ALPHA", Modes.class))
+      .isEqualTo(Modes.ALPHA);
+}
+
+### 5. Creating a GenericConverter
+
+A GenericConverter provides us more flexibility to create a Converter for a more generic use at the cost of losing some type safety.
+
+Let's consider an example of converting an Integer, Double, or a String to a BigDecimal value.We don't need to write three Converters for this. A simple GenericConverter could serve the purpose.
+
+The first step is to tell Spring what types of conversion are supported. We do this by creating a Set of ConvertiblePair:
+	
+public class GenericBigDecimalConverter 
+  implements GenericConverter {
+ 
+@Override
+public Set<ConvertiblePair> getConvertibleTypes () {
+ 
+    ConvertiblePair[] pairs = new ConvertiblePair[] {
+          new ConvertiblePair(Number.class, BigDecimal.class),
+          new ConvertiblePair(String.class, BigDecimal.class)};
+        return ImmutableSet.copyOf(pairs);
+    }
+}
+
+The next step is to override the convert() method in the same class:
+	
+@Override
+public Object convert (Object source, TypeDescriptor sourceType, 
+  TypeDescriptor targetType) {
+ 
+    if (sourceType.getType() == BigDecimal.class) {
+        return source;
+    }
+ 
+    if(sourceType.getType() == String.class) {
+        String number = (String) source;
+        return new BigDecimal(number);
+    } else {
+        Number number = (Number) source;
+        BigDecimal converted = new BigDecimal(number.doubleValue());
+        return converted.setScale(2, BigDecimal.ROUND_HALF_EVEN);
+    }
+}
+
+The convert() method is as simple as it can be. However, the TypeDescriptor provides us great flexibility in terms of getting the details concerning the source and the target type.
+
+As you might have already guessed, the next step is to register this Converter:
+	
+@Override
+public void addFormatters(FormatterRegistry registry) {
+    registry.addConverter(new StringToEmployeeConverter());
+    registry.addConverterFactory(new StringToEnumConverterFactory());
+    registry.addConverter(new GenericBigDecimalConverter());
+}
+
+Using this Converter is similar to the other examples that we've already seen:
+	
+@Test
+public void whenConvertingToBigDecimalUsingGenericConverter_thenSuccess() {
+    assertThat(conversionService
+      .convert(Integer.valueOf(11), BigDecimal.class))
+      .isEqualTo(BigDecimal.valueOf(11.00)
+      .setScale(2, BigDecimal.ROUND_HALF_EVEN));
+    assertThat(conversionService
+      .convert(Double.valueOf(25.23), BigDecimal.class))
+      .isEqualByComparingTo(BigDecimal.valueOf(Double.valueOf(25.23)));
+    assertThat(conversionService.convert("2.32", BigDecimal.class))
+      .isEqualTo(BigDecimal.valueOf(2.32));
+}
+
+
+
+
+
+
+
+
+
+
+
+
+## CORE SPRING ANNOTATIONS
  
  ### Context Configuration Annotations
  
