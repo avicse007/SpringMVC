@@ -550,6 +550,144 @@ context. Used to perform any cleanup work necessary.
     - have to add @Valid annotation to the Controller method that does the form binding with the user defined form bean and have to  
       provide the binding result to check all the constraints applied on the form bean is validated and has no error. 
      
+  #### 14. Using @Enumerated Annotation
+  
+  The most common option to map an enum value to and from its database representation in JPA before 2.1. is to use the @Enumerated  
+  annotation. This way, we can instruct a JPA provider to convert an enum to its ordinal or String value.
+  
+  But first, let's create a simple @Entity that we'll be using throughout this tutorial:
+	
+@Entity
+public class Article {
+    @Id
+    private int id;
+ 
+    private String title;
+ 
+    // standard constructors, getters and setters
+}
+
+##### 2.1. Mapping Ordinal Value
+
+If we put the @Enumerated(EnumType.ORDINAL) annotation on the enum field, JPA will use the Enum.ordinal() value when persisting a given entity in the database.
+
+Let's introduce the first enum:
+public enum Status {
+    OPEN, REVIEW, APPROVED, REJECTED;
+}
+
+Next, let's add it to the Article class and annotate it with @Enumerated(EnumType.ORDINAL):
+@Entity
+public class Article {
+    @Id
+    private int id;
+ 
+    private String title;
+ 
+    @Enumerated(EnumType.ORDINAL)
+    private Status status;
+}
+
+Now, when persisting an Article entity:
+
+Article article = new Article();
+article.setId(1);
+article.setTitle("ordinal title");
+article.setStatus(Status.OPEN);
+
+JPA will trigger the following SQL statement:
+	
+insert
+into
+    Article
+    (status, title, id) 
+values
+    (?, ?, ?)
+binding parameter [1] as [INTEGER] - [0]
+binding parameter [2] as [VARCHAR] - [ordinal title]
+binding parameter [3] as [INTEGER] - [1]
+
+A problem with this kind of mapping arises when we need to modify our enum. If we add a new value in the middle or rearrange the enum's order, we'll break the existing data model.
+
+Such issues might be hard to catch, as well as problematic to fix, as we would have to update all the database records.
+##### 2.2. Mapping String Value
+
+Analogously, JPA will use the Enum.name() value when storing an entity if we annotate the enum field with @Enumerated(EnumType.STRING).
+
+Let's create the second enum:	
+public enum Type {
+    INTERNAL, EXTERNAL;
+}
+
+And let's add it to our Article class and annotate it with @Enumerated(EnumType.STRING):
+	
+@Entity
+public class Article {
+    @Id
+    private int id;
+ 
+    private String title;
+ 
+    @Enumerated(EnumType.ORDINAL)
+    private Status status;
+ 
+    @Enumerated(EnumType.STRING)
+    private Type type;
+}
+
+Now, when persisting an Article entity:
+	
+Article article = new Article();
+article.setId(2);
+article.setTitle("string title");
+article.setType(Type.EXTERNAL);
+
+JPA will execute the following SQL statement:
+	
+insert
+into
+    Article
+    (status, title, type, id) 
+values
+    (?, ?, ?, ?)
+binding parameter [1] as [INTEGER] - [null]
+binding parameter [2] as [VARCHAR] - [string title]
+binding parameter [3] as [VARCHAR] - [EXTERNAL]
+binding parameter [4] as [INTEGER] - [2]
+
+With @Enumerated(EnumType.STRING), we can safely add new enum values or change our enum's order. However, renaming an enum value will still break the database data.
+
+Additionally, even though this data representation is far more readable compared to the @Enumerated(EnumType.ORDINAL) option, it also consumes a lot more space than necessary. This might turn out to be a significant issue when we need to deal with a high volume of data.
+##### 3. Using @PostLoad and @PrePersist annotations
+
+Another option we have to deal with persisting enums in a database is to use standard JPA callback methods. We can map our enums back and forth in the @PostLoad and @PrePersist events.
+
+The idea is to have two attributes in an entity. The first one is mapped to a database value, and the second one is a @Transient field that holds a real enum value. The transient attribute is then used by the business logic code.
+
+To better understand the concept, let's create a new enum and use its int value in the mapping logic:
+	
+public enum Priority {
+    LOW(100), MEDIUM(200), HIGH(300);
+ 
+    private int priority;
+ 
+    private Priority(int priority) {
+        this.priority = priority;
+    }
+ 
+    public int getPriority() {
+        return priority;
+    }
+ 
+    public static Priority of(int priority) {
+        return Stream.of(Priority.values())
+          .filter(p -> p.getPriority() == priority)
+          .findFirst()
+          .orElseThrow(IllegalArgumentException::new);
+    }
+}
+
+We've also added the Priority.of() method to make it easy to get a Priority instance based on its int value.
 
 
  ### TESTING ANNOTATIONS
