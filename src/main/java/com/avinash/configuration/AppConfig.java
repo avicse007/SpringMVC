@@ -3,6 +3,7 @@ package com.avinash.configuration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -14,6 +15,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupp
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import org.springframework.web.servlet.view.JstlView;
+import org.springframework.web.servlet.view.ResourceBundleViewResolver;
+import org.springframework.web.servlet.view.XmlViewResolver;
 
 import com.avinash.convertors.StringToEnumConvertor;
 
@@ -27,14 +30,41 @@ public class AppConfig  extends WebMvcConfigurationSupport {
                 .addResourceLocations("classpath:/static/css/", "classpath:/static/images/");
     }
 
+    //Internal view resolver
+    
     @Bean
     public InternalResourceViewResolver jspViewResolver(){
         InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
         viewResolver.setPrefix("/WEB-INF/jsp/");
         viewResolver.setSuffix(".jsp");
+        //for chaining of the view resolver we can set the order
+        viewResolver.setOrder(2);
         viewResolver.setViewClass(JstlView.class);
         return viewResolver;
     }
+    
+    
+  //for xml view resolver
+    @Bean
+    public XmlViewResolver xmlViewResolver() {
+    	XmlViewResolver viewResolver = new XmlViewResolver();
+    	viewResolver.setLocation(new ClassPathResource("view.xml"));
+    	//for chaining of the view resolver we can set the order
+        viewResolver.setOrder(1);
+    	return viewResolver;
+    }
+    
+  //for ResourceBundle View Resolver
+    /*
+
+    @Bean
+    public ResourceBundleViewResolver resourceBundleViewResolver() {
+    	ResourceBundleViewResolver viewResolver = new ResourceBundleViewResolver();
+    	viewResolver.setBasename("views");
+    	return viewResolver;
+    } 
+     * 
+     */    
     
     @Override
     protected void addFormatters(FormatterRegistry registry) {
@@ -61,4 +91,6 @@ public class AppConfig  extends WebMvcConfigurationSupport {
 		taskExecutor.setThreadNamePrefix("hplus-thread-");
     	return taskExecutor;
     }
+    
+    
 }
