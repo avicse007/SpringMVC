@@ -3,7 +3,10 @@ package com.avinash.configuration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.format.FormatterRegistry;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
@@ -37,5 +40,25 @@ public class AppConfig  extends WebMvcConfigurationSupport {
     protected void addFormatters(FormatterRegistry registry) {
     	registry.addConverter( new StringToEnumConvertor());
     	super.addFormatters(registry);
+    }
+    
+    /* To support async processing 
+     * 
+     *      
+    */
+    @Override
+    protected void configureAsyncSupport(AsyncSupportConfigurer asyncSupportConfigurer) {
+    	asyncSupportConfigurer.setDefaultTimeout(5000);
+    	//this set method needs an instance of AsyncTaskExecutor 
+    	// so we will get it via a Bean mvcTaskExecutor
+    	asyncSupportConfigurer.setTaskExecutor(mvcTaskExecutor());
+    }
+    
+    //Bean for returning the AsyncTaskExecutor
+    @Bean
+    public AsyncTaskExecutor mvcTaskExecutor() {
+		ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
+		taskExecutor.setThreadNamePrefix("hplus-thread-");
+    	return taskExecutor;
     }
 }

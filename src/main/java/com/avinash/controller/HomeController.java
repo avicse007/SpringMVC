@@ -38,7 +38,7 @@ public class HomeController {
     	return "register";
     }
     
-    @ModelAttribute("newUser")
+    /*@ModelAttribute("newUser")
     public User getDefualtUser() {
     	return new User();
     }
@@ -51,5 +51,5 @@ public class HomeController {
     @ModelAttribute("login")
     public Login getDefualtLogin() {
     	return new Login();
-    }
+    }*/
 }
