@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
+import com.avinash.model.Login;
 import com.avinash.model.User;
 
 @Controller
@@ -45,5 +46,10 @@ public class HomeController {
     @ModelAttribute("genderItems")
     public List<String> getGenderItems() {
     	return Arrays.asList(new String[] {"Male","Female","Other"});
+    }
+    
+    @ModelAttribute("login")
+    public Login getDefualtLogin() {
+    	return new Login();
     }
 }
