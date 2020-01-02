@@ -1,29 +1,30 @@
 <!DOCTYPE html>
-<%@ page contentType="text/html; charset=UTF-8" %>
 <head>
     <meta charset="UTF-8">
     <title>HPlus</title>
-  <link rel="stylesheet" href="css/style.css" type="text/css"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+<meta charset="ISO-8859-1">
 </head>
 <body>
 <header id="home" class="header">
     <nav class="nav" role="navigation">
         <div class="container nav-elements">
             <div class="branding">
-                <a href="/home"><img src="images/hpluslogo.svg" alt="Logo - H Plus Sports"></a>
+                <a href="#home"><img src="images/hpluslogo.svg" alt="Logo - H Plus Sports"></a>
             </div><!-- branding -->
             <ul class="navbar">
                 <li><a href="/home">home</a></li>
-                <li><a href="/goToLogin">login</a></li>
+                <li><a href="logout">logout</a></li>
                 <li><a href="/goToSearch">search</a></li>
                 <li><a href="/redirectToLinkedIn">linkedin</a></li>
             </ul><!-- navbar -->
+
         </div><!-- container nav-elements -->
     </nav>
     <div class="container tagline">
         <h1 class="headline">Our Mission</h1>
-        <p>We support and encourage <em>active and healthy</em> lifestyles, by offering <em>ethically sourced</em> and <em>eco-friendly</em> nutritional products for the <em>performance-driven</em> athlete.</p>
+        <em>Welcome,  ${username}</em>
+       
     </div><!-- container tagline -->
 </header><!-- #home -->
 
@@ -36,7 +37,7 @@
             <p>Today that vision has become H+ Sport…offering a variety of <a href="#products">supplements, energy bars and rehydration solutions</a>. At the foundation of H+ Sports are products backed by scientific and performance data.</p>
         </div>
     </div><!-- container text -->
-</section><!-- #history -->
+
 
 <section id="guarantee" class="section">
     <header class="imageheader"></header>
@@ -107,6 +108,21 @@
             </div><!-- person-card -->
         </div><!-- container -->
 </section><!-- people -->
+
+
+<section id="search" class="section">
+    <header class="imageheader"></header>
+    <div class="container">
+        <h2 class="headline">Search Products</h2>
+        <form action="search" method="get">
+            <label class="card-title">Search your product</label>
+            <input type="search" name="search">
+            <input type="submit" value="Search">
+        </form>
+    </div>
+</section><!-- guarantee -->
+
+
 
 
 <footer class="footer">

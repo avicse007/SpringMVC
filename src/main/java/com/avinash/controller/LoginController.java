@@ -5,6 +5,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.SessionAttributes;
 
 import com.avinash.exceptions.ApplicationException;
 import com.avinash.model.Login;
@@ -12,6 +13,7 @@ import com.avinash.model.User;
 import com.avinash.repository.UserRepository;
 
 @Controller
+@SessionAttributes("login")
 public class LoginController {
 	
 	@Autowired
@@ -21,7 +23,7 @@ public class LoginController {
 	public String login(@ModelAttribute("login")Login login) {
 		User user = userRepository.searchByName(login.getUsername());
 		if(user!=null && user.getPassword().equals(login.getPassword())){
-			return "search";
+			return "forward:/userprofile";
 		}
 		else {
 			throw new ApplicationException("Either user name or Password is incorrect");

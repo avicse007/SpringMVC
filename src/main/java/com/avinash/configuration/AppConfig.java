@@ -9,6 +9,7 @@ import org.springframework.format.FormatterRegistry;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
@@ -19,6 +20,7 @@ import org.springframework.web.servlet.view.ResourceBundleViewResolver;
 import org.springframework.web.servlet.view.XmlViewResolver;
 
 import com.avinash.convertors.StringToEnumConvertor;
+import com.avinash.interceptors.LoggingInterceptor;
 
 @Configuration
 @ComponentScan(basePackages="com.avinash")
@@ -92,5 +94,11 @@ public class AppConfig  extends WebMvcConfigurationSupport {
     	return taskExecutor;
     }
     
+    //Override a method to register the Custom interceptor that we have created 
+    
+    @Override
+    protected void addInterceptors(InterceptorRegistry registry) {
+    	registry.addInterceptor(new LoggingInterceptor()).addPathPatterns("/*");
+    }
     
 }
